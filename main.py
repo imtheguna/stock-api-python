@@ -4,13 +4,20 @@ import requests
 
 app = Flask(__name__)
 
+@app.route("/test")
+def test():
+    return jsonify({
+        "Status":"OK"
+    })
+
 @app.route("/")
 def home():
     return jsonify({
         "message": "Welcome to the Stock + Mutual Fund API",
         "endpoints": {
             "/price": "GET with ?symbol= (AAPL, RELIANCE.BO, VTSAX, etc.)",
-            "/mf": "GET with ?code= (Indian Mutual Fund Scheme Code like 120503)"
+            "/mf": "GET with ?code= (Indian Mutual Fund Scheme Code like 120503)",
+            "/mflist":"GET all MF list"
         }
     })
 
@@ -74,7 +81,6 @@ def getmflist():
 
     for line in lines:
         parts = line.split(";")
-        print(parts)
         if len(parts) >= 5 and parts[0].isdigit():
             funds.append({
                  "scheme_code": parts[0],

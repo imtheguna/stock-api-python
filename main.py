@@ -7,7 +7,7 @@ app = Flask(__name__)
 @app.route("/test")
 def test():
     return jsonify({
-        "Status":"OK"
+        "Service-Status":"OK"
     })
 
 @app.route("/")

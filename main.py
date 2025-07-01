@@ -86,5 +86,6 @@ def getmflist():
 
     return funds
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0',port=4444)
+def creteApp():
+    #app.run(host='0.0.0.0',port=4444)
+    app.run(debug=True)

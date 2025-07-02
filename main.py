@@ -29,9 +29,17 @@ def getsharelistin():
     with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_file:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+                  "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+            "Accept": "text/csv,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://www.nseindia.com/",
+            "Origin": "https://www.nseindia.com",
+            "Connection": "keep-alive"
         }
         response = requests.get(csv_url, headers=headers)
+        if response.status_code != 200:
+            raise Exception(f"Failed to fetch CSV: {response.status_code}")
         response.raise_for_status()
         tmp_file.write(response.content)
         temp_path = tmp_file.name

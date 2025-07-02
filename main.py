@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 import yfinance as yf
 import requests
+import pandas as pd
+import tempfile
 
 app = Flask(__name__)
 
@@ -20,6 +22,38 @@ def home():
             "/mflist":"GET all MF list"
         }
     })
+
+@app.route("/insharelist")
+def getsharelistin():
+    csv_url = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_file:
+        headers = {
+            "User-Agent": "Mozilla/5.0",  # NSE may require a browser-like user agent
+        }
+        response = requests.get(csv_url, headers=headers)
+        response.raise_for_status()
+        tmp_file.write(response.content)
+        temp_path = tmp_file.name
+
+    df = pd.read_csv(temp_path,usecols=[0, 1])
+    json_data = df.to_dict(orient='records')
+    return jsonify(json_data)
+
+@app.route("/ussharelist")
+def getsharelistus():
+    url = "https://datahub.io/core/nasdaq-listings/r/nasdaq-listed-symbols.csv"
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_file:
+        headers = {
+            "User-Agent": "Mozilla/5.0",  # NSE may require a browser-like user agent
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        tmp_file.write(response.content)
+        temp_path = tmp_file.name
+        
+    df = pd.read_csv(temp_path,usecols=[0, 1])
+    json_data = df.to_dict(orient='records')
+    return jsonify(json_data)
 
 # ────── STOCK PRICE (US & INDIAN + US MF) ──────
 @app.route("/price", methods=["GET"])

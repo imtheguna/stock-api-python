@@ -28,7 +28,8 @@ def getsharelistin():
     csv_url = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
     with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_file:
         headers = {
-            "User-Agent": "Mozilla/5.0",  # NSE may require a browser-like user agent
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
         }
         response = requests.get(csv_url, headers=headers)
         response.raise_for_status()

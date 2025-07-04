@@ -39,4 +39,3 @@ A lightweight REST API built with Flask to serve real-time and historical stock/
 
 ```bash
 git clone https://github.com/yourname/stock-mf-api.git
-cd stock-mf-api

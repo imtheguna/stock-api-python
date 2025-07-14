@@ -16,6 +16,4 @@ RUN echo '#!/bin/sh' > /check_and_kill_port.sh && \
     echo 'fi' >> /check_and_kill_port.sh && \
     chmod +x /check_and_kill_port.sh
 
-EXPOSE 4444
-
-CMD ["/bin/sh", "-c", "/check_and_kill_port.sh && gunicorn run:app --bind 0.0.0.0:4444 --log-level debug"]
+CMD ["/bin/sh", "-c", "/check_and_kill_port.sh && gunicorn run:app --log-level debug"]

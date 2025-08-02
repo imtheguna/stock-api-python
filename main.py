@@ -37,7 +37,7 @@ def getsharelistin():
             "Accept-Language": "en-US,en;q=0.9",
             "Referer": "https://www.nseindia.com/",
             "Origin": "https://www.nseindia.com",
-            "Connection": "keep-alive"
+            #"Connection": "keep-alive"
         }
 
         now = datetime.datetime.now()

@@ -76,6 +76,8 @@ def getsharelistin():
             json_data = df.to_dict(orient='records')
             return jsonify(json_data)
         except Exception as e:
+            os.remove(filepath)
+            print('Cached file deleted')
             return jsonify({"error": "Failed to read cached CSV", "details": str(e)}), 500
 
 

@@ -35,8 +35,8 @@ def getsharelistin():
             "Accept": "text/csv,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Accept-Encoding": "gzip, deflate, br",
             "Accept-Language": "en-US,en;q=0.9",
-            "Referer": "https://www.nseindia.com/",
-            "Origin": "https://www.nseindia.com",
+            #"Referer": "https://www.nseindia.com/",
+            #"Origin": "https://www.nseindia.com",
             #"Connection": "keep-alive"
         }
 

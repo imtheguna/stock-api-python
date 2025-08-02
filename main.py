@@ -127,6 +127,8 @@ def getsharelistus():
         df = pd.read_csv(today_file, usecols=[0, 1])
         return jsonify(df.to_dict(orient='records'))
     except Exception as e:
+        os.remove(filepath)
+        print('Cached file deleted')
         return jsonify({"error": f"Failed to read CSV: {str(e)}"}), 500
 
 
@@ -259,6 +261,8 @@ def getmflist():
 
         return jsonify(funds)
     except Exception as e:
+        os.remove(filepath)
+        print('Cached file deleted')
         return jsonify({"error": "Failed to read cached NAV data", "details": str(e)}), 500
 
 def creteApp():

@@ -25,61 +25,67 @@ def home():
         }
     })
 
+
+
 @app.route("/insharelist")
 def getsharelistin():
-    csv_url = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
-    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_file:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-            "Accept": "text/csv,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "en-US,en;q=0.9",
-            #"Referer": "https://www.nseindia.com/",
-            #"Origin": "https://www.nseindia.com",
-            #"Connection": "keep-alive"
-        }
+    nse_csv_url = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
+    fallback_csv_url = "https://raw.githubusercontent.com/imtheguna/stock-api-python/main/EQUITY_L.csv"
 
-        now = datetime.datetime.now()
-        download_dir = "./data_cache"
-        os.makedirs(download_dir, exist_ok=True)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+        "Accept": "text/csv,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.nseindia.com/",
+        "Origin": "https://www.nseindia.com",
+        "Connection": "keep-alive"
+    }
 
-        date_str = now.strftime("%Y%m%d")
-        filename = f"EQUITY_L_{date_str}.csv"
-        filepath = os.path.join(download_dir, filename)
+    now = datetime.datetime.now()
+    download_dir = "./data_cache"
+    os.makedirs(download_dir, exist_ok=True)
 
-        def file_is_older_than(filepath, minutes=60):
-            if not os.path.exists(filepath):
-                return True
-            file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
-            age = now - file_mtime
-            return age.total_seconds() > minutes * 60
+    date_str = now.strftime("%Y%m%d")
+    filename = f"EQUITY_L_{date_str}.csv"
+    filepath = os.path.join(download_dir, filename)
 
-        if file_is_older_than(filepath, 60):
-            try:
-                print('File Downloading '+filepath)
-                response = requests.get(csv_url, headers=headers)
-                response.raise_for_status()
-                with open(filepath, "wb") as f:
-                    f.write(response.content)
-            except Exception as e:
-                if os.path.exists(filepath):
-                    # File exists, so reuse it silently on download failure
-                    print('Reuse file ' + filename)
-                else:
-                    return jsonify({"error": f"Failed to download NSE CSV: {str(e)}"}), 503
-        else:
-            print('Reuse file ' + filename)
+    def file_is_older_than(path, minutes=60):
+        if not os.path.exists(path):
+            return True
+        age = now - datetime.datetime.fromtimestamp(os.path.getmtime(path))
+        return age.total_seconds() > minutes * 60
 
+    def download_csv(url, headers):
         try:
-            df = pd.read_csv(filepath, usecols=[0, 1])
-            json_data = df.to_dict(orient='records')
-            return jsonify(json_data)
+            print(f"Attempting to download from {url}")
+            response = requests.get(url, headers=headers, timeout=15)
+            response.raise_for_status()
+            with open(filepath, "wb") as f:
+                f.write(response.content)
+            return True
         except Exception as e:
-            os.remove(filepath)
-            print('Cached file deleted')
-            return jsonify({"error": "Failed to read cached CSV", "details": str(e)}), 500
+            print(f"Download failed: {e}")
+            return False
 
+    # Download or reuse
+    if file_is_older_than(filepath, 60):
+        if not download_csv(nse_csv_url, headers):
+            print("Trying fallback...")
+            if not download_csv(fallback_csv_url, {}):
+                return jsonify({"error": "Failed to download CSV from both sources"}), 503
+    else:
+        print(f"Using cached file: {filename}")
+
+    # Read and return
+    try:
+        df = pd.read_csv(filepath, usecols=["SYMBOL", "NAME OF COMPANY"])
+        data = df.to_dict(orient="records")
+        return jsonify(data)
+    except Exception as e:
+        os.remove(filepath)
+        return jsonify({"error": "Failed to read CSV", "details": str(e)}), 500
 
 
 @app.route("/ussharelist")

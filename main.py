@@ -76,6 +76,7 @@ def getsharelistin():
             if not download_csv(fallback_csv_url, {}):
                 return jsonify({"error": "Failed to download CSV from both sources"}), 503
     else:
+        print('')
         print(f"Using cached file: {filename}")
 
     # Read and return

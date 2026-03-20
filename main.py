@@ -3,6 +3,7 @@ import yfinance as yf
 import requests
 import pandas as pd
 import tempfile,datetime,os
+from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)

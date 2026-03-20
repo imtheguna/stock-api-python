@@ -5,7 +5,7 @@ import pandas as pd
 import tempfile,datetime,os
 
 app = Flask(__name__)
-
+CORS(app)
 @app.route("/test")
 def test():
     return jsonify({

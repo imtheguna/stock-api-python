@@ -272,6 +272,24 @@ def getmflist():
         print('Cached file deleted')
         return jsonify({"error": "Failed to read cached NAV data", "details": str(e)}), 500
 
+def getpriceforjson(symbol:str,day:str):
+    ticker = yf.Ticker(symbol)
+    data = ticker.history(period=day)
+    data = data['Close'].iloc[-1 * int(day[0])]
+    # data.reset_index()
+    # json_data = data.to_json(orient="records", date_format="iso")
+    return data
+
+@app.route("/getDetailsFromJson", methods=["POST"])
+def getDetailsFromJson():
+    result_list = {}
+    payload = request.get_json()
+    day = payload['day']
+    for i in payload['list']:
+        if(payload['list'][i]['type']!='inmf'):
+            result_list[i] = getpriceforjson(payload['list'][i]['symbol'],day=day)
+    return result_list
+
 def creteApp():
-    app.run(host='0.0.0.0',port=4444)
+    app.run(host='0.0.0.0',port=4444,debug=True)
     #app.run(debug=True)

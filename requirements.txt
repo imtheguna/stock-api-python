@@ -2,4 +2,4 @@ yfinance
 flask
 requests
 gunicorn
-pandas
+flask-cors

@@ -291,5 +291,5 @@ def getDetailsFromJson():
     return result_list
 
 def creteApp():
-    app.run(host='0.0.0.0',port=4444,debug=True)
+    app.run(host='0.0.0.0',port=4444)
     #app.run(debug=True)

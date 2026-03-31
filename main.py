@@ -7,6 +7,42 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+
+etf_list = list([
+  {"symbol":"NIFTYBEES","etf_name":"Nippon India ETF Nifty 50 BeES","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"SETFNIF50","etf_name":"SBI ETF Nifty 50","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"ICICINIFTY","etf_name":"ICICI Prudential Nifty 50 ETF","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"HDFCNIFTY","etf_name":"HDFC Nifty 50 ETF","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"UTINIFTETF","etf_name":"UTI Nifty ETF","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"JUNIORBEES","etf_name":"Nippon India ETF Nifty Next 50 BeES","exchange":"NSE","type":"Index","track":"Nifty Next 50"},
+  {"symbol":"SETFNN50","etf_name":"SBI ETF Nifty Next 50","exchange":"NSE","type":"Index","track":"Nifty Next 50"},
+  {"symbol":"ICICIN500","etf_name":"ICICI Prudential Nifty 500 ETF","exchange":"NSE","type":"Index","track":"Nifty 500"},
+  {"symbol":"MOM500","etf_name":"Motilal Oswal Nifty 500 ETF","exchange":"NSE","type":"Index","track":"Nifty 500"},
+  {"symbol":"MID150BEES","etf_name":"Nippon India ETF Nifty Midcap 150","exchange":"NSE","type":"Index","track":"Nifty Midcap 150"},
+  {"symbol":"SETFMID150","etf_name":"SBI ETF Nifty Midcap 150","exchange":"NSE","type":"Index","track":"Nifty Midcap 150"},
+  {"symbol":"SMALLCAP","etf_name":"Nippon India ETF Nifty Smallcap 100","exchange":"NSE","type":"Index","track":"Nifty Smallcap 100"},
+  {"symbol":"BANKBEES","etf_name":"Nippon India ETF Bank BeES","exchange":"NSE","type":"Sector","track":"Nifty Bank"},
+  {"symbol":"SETFBANK","etf_name":"SBI ETF Banking","exchange":"NSE","type":"Sector","track":"Nifty Bank"},
+  {"symbol":"ICICIBANKETF","etf_name":"ICICI Prudential Bank ETF","exchange":"NSE","type":"Sector","track":"Nifty Bank"},
+  {"symbol":"ITBEES","etf_name":"Nippon India ETF IT BeES","exchange":"NSE","type":"Sector","track":"Nifty IT"},
+  {"symbol":"PHARMABEES","etf_name":"Nippon India ETF Pharma BeES","exchange":"NSE","type":"Sector","track":"Nifty Pharma"},
+  {"symbol":"PSUBNKBEES","etf_name":"Nippon India ETF PSU Bank","exchange":"NSE","type":"Sector","track":"Nifty PSU Bank"},
+  {"symbol":"INFRABEES","etf_name":"Nippon India ETF Infrastructure","exchange":"NSE","type":"Sector","track":"Infrastructure"},
+  {"symbol":"SETFSENSEX","etf_name":"SBI ETF Sensex","exchange":"NSE","type":"Index","track":"Sensex"},
+  {"symbol":"HDFCSENSEX","etf_name":"HDFC Sensex ETF","exchange":"NSE","type":"Index","track":"Sensex"},
+  {"symbol":"UTISENSETF","etf_name":"UTI Sensex ETF","exchange":"NSE","type":"Index","track":"Sensex"},
+  {"symbol":"BHARAT22","etf_name":"ICICI Prudential Bharat 22 ETF","exchange":"NSE","type":"Index","track":"Bharat 22"},
+  {"symbol":"GOLDBEES","etf_name":"Nippon India ETF Gold BeES","exchange":"NSE","type":"Commodity","track":"Gold"},
+  {"symbol":"SETFGOLD","etf_name":"SBI Gold ETF","exchange":"NSE","type":"Commodity","track":"Gold"},
+  {"symbol":"HDFCGOLD","etf_name":"HDFC Gold ETF","exchange":"NSE","type":"Commodity","track":"Gold"},
+  {"symbol":"ICICIGOLD","etf_name":"ICICI Prudential Gold ETF","exchange":"NSE","type":"Commodity","track":"Gold"},
+  {"symbol":"SILVERBEES","etf_name":"Nippon India ETF Silver","exchange":"NSE","type":"Commodity","track":"Silver"},
+  {"symbol":"LIQUIDBEES","etf_name":"Nippon India ETF Liquid BeES","exchange":"NSE","type":"Debt","track":"Liquid/Money Market"},
+  {"symbol":"MON100","etf_name":"Motilal Oswal Nasdaq 100 ETF","exchange":"NSE","type":"International","track":"NASDAQ 100"},
+  {"symbol":"MAFANG","etf_name":"Mirae Asset FANG+ ETF","exchange":"NSE","type":"International","track":"NYSE FANG+"},
+  {"symbol":"HNGSNGBEES","etf_name":"Nippon India ETF Hang Seng","exchange":"NSE","type":"International","track":"Hang Seng"}
+])
+
 @app.route("/test")
 def test():
     return jsonify({
@@ -51,7 +87,12 @@ def getsharelistin():
     date_str = now.strftime("%Y%m%d")
     filename = f"EQUITY_L_{date_str}.csv"
     filepath = os.path.join(download_dir, filename)
-
+    etf = []
+    for i in etf_list:
+        etf.append({
+            "NAME OF COMPANY": i['etf_name'],
+            "SYMBOL": i['symbol']
+        })
     def file_is_older_than(path, minutes=60):
         if not os.path.exists(path):
             return True
@@ -84,7 +125,7 @@ def getsharelistin():
     try:
         df = pd.read_csv(filepath, usecols=["SYMBOL", "NAME OF COMPANY"])
         data = df.to_dict(orient="records")
-        return jsonify(data)
+        return jsonify(data+etf)
     except Exception as e:
         os.remove(filepath)
         return jsonify({"error": "Failed to read CSV", "details": str(e)}), 500
@@ -135,7 +176,7 @@ def getsharelistus():
         df = pd.read_csv(today_file, usecols=[0, 1])
         return jsonify(df.to_dict(orient='records'))
     except Exception as e:
-        os.remove(filepath)
+        os.remove(today_file)
         print('Cached file deleted')
         return jsonify({"error": f"Failed to read CSV: {str(e)}"}), 500
 

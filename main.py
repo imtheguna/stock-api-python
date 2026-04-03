@@ -124,6 +124,7 @@ def getsharelistin():
     # Read and return
     try:
         df = pd.read_csv(filepath, usecols=["SYMBOL", "NAME OF COMPANY"])
+        df = df.fillna('NULL')
         data = df.to_dict(orient="records")
         return jsonify(data+etf)
     except Exception as e:
@@ -174,6 +175,7 @@ def getsharelistus():
     # Read and return JSON data
     try:
         df = pd.read_csv(today_file, usecols=[0, 1])
+        df = df.fillna('NULL')
         return jsonify(df.to_dict(orient='records'))
     except Exception as e:
         os.remove(today_file)

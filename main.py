@@ -9,6 +9,13 @@ app = Flask(__name__)
 CORS(app)
 
 etf_list = list([
+    {
+  "symbol": "AUTOBEES",
+  "etf_name": "Nippon India ETF Nifty Auto BeES",
+  "exchange": "NSE",
+  "type": "Index",
+  "track": "Nifty Auto"
+},
   {"symbol":"NIFTYBEES","etf_name":"Nippon India ETF Nifty 50 BeES","exchange":"NSE","type":"Index","track":"Nifty 50"},
   {"symbol":"SETFNIF50","etf_name":"SBI ETF Nifty 50","exchange":"NSE","type":"Index","track":"Nifty 50"},
   {"symbol":"ICICINIFTY","etf_name":"ICICI Prudential Nifty 50 ETF","exchange":"NSE","type":"Index","track":"Nifty 50"},

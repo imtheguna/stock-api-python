@@ -8,6 +8,13 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+us_stocks = list([
+   {
+    "Company Name": "Vanguard S&P 500 ETF",
+    "Symbol": "VOO"
+  }
+])
+
 etf_list = list([
     {
   "symbol": "AUTOBEES",

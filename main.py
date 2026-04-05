@@ -190,7 +190,7 @@ def getsharelistus():
     try:
         df = pd.read_csv(today_file, usecols=[0, 1])
         df = df.fillna('NULL')
-        return jsonify(df.to_dict(orient='records'))
+        return jsonify(df.to_dict(orient='records') +us_stocks)
     except Exception as e:
         os.remove(today_file)
         print('Cached file deleted')

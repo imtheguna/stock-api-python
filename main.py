@@ -17,11 +17,24 @@ us_stocks = list([
 
 etf_list = list([
     {
+  "symbol": "PGINVIT-IV",
+  "etf_name": "Powergrid Infrastructure Investment Trust",
+  "exchange": "NSE",
+  "type": "Trust",
+  "track": "Trust"
+},
+{
   "symbol": "AUTOBEES",
   "etf_name": "Nippon India ETF Nifty Auto BeES",
   "exchange": "NSE",
   "type": "Index",
   "track": "Nifty Auto"
+},{
+  "symbol": "FMCGIETF",
+  "etf_name": "ICICI Prudential Nifty Fmcg Etf",
+  "exchange": "NSE",
+  "type": "Index",
+  "track": "Nifty FMCG"
 },
   {"symbol":"NIFTYBEES","etf_name":"Nippon India ETF Nifty 50 BeES","exchange":"NSE","type":"Index","track":"Nifty 50"},
   {"symbol":"SETFNIF50","etf_name":"SBI ETF Nifty 50","exchange":"NSE","type":"Index","track":"Nifty 50"},

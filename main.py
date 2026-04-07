@@ -89,7 +89,11 @@ def home():
         }
     })
 
-
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    traceback.print_exc()
+    return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
 
 @app.route("/insharelist")
 def getsharelistin():
@@ -155,7 +159,8 @@ def getsharelistin():
         data = df.to_dict(orient="records")
         return jsonify(data+etf)
     except Exception as e:
-        os.remove(filepath)
+        if os.path.exists(filepath):
+            os.remove(filepath)
         return jsonify({"error": "Failed to read CSV", "details": str(e)}), 500
 
 
@@ -230,6 +235,7 @@ def get_price():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # ────── INDIAN MUTUAL FUND NAV (FROM AMFI) ──────
 @app.route("/mf", methods=["GET"])
@@ -309,7 +315,7 @@ def getmflist():
     if file_is_older_than(filepath, 60):
         try:
             url = "https://www.amfiindia.com/spages/NAVAll.txt"
-            response = requests.get(url)
+            response = requests.get(url,timeout=15)
             response.raise_for_status()
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(response.text)
@@ -339,7 +345,8 @@ def getmflist():
 
         return jsonify(funds)
     except Exception as e:
-        os.remove(filepath)
+        if os.path.exists(filepath):
+            os.remove(filepath)
         print('Cached file deleted')
         return jsonify({"error": "Failed to read cached NAV data", "details": str(e)}), 500
 
@@ -351,15 +358,15 @@ def getpriceforjson(symbol:str,day:str):
     # json_data = data.to_json(orient="records", date_format="iso")
     return data
 
-@app.route("/getDetailsFromJson", methods=["POST"])
-def getDetailsFromJson():
-    result_list = {}
-    payload = request.get_json()
-    day = payload['day']
-    for i in payload['list']:
-        if(payload['list'][i]['type']!='inmf'):
-            result_list[i] = getpriceforjson(payload['list'][i]['symbol'],day=day)
-    return result_list
+# @app.route("/getDetailsFromJson", methods=["POST"])
+# def getDetailsFromJson():
+#     result_list = {}
+#     payload = request.get_json()
+#     day = payload['day']
+#     for i in payload['list']:
+#         if(payload['list'][i]['type']!='inmf'):
+#             result_list[i] = getpriceforjson(payload['list'][i]['symbol'],day=day)
+#     return result_list
 
 def creteApp():
     app.run(host='0.0.0.0',port=4444)

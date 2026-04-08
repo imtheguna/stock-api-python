@@ -1,16 +1,17 @@
-from flask import Flask, logging, request, jsonify
+from flask import Flask, request, jsonify
 import yfinance as yf
 import requests
 import pandas as pd
 import tempfile,datetime,os
 from flask_cors import CORS
 import traceback
+import logging
 
 app = Flask(__name__)
 CORS(app)
 
-logging.basicConfig(level=logging.DEBUG)
-app.logger.setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
+app.logger.setLevel(logging.ERROR)
 
 us_stocks = list([
    {
@@ -93,17 +94,17 @@ def home():
         }
     })
 
-@app.errorhandler(Exception)
-def handle_exception(e):
-    print("\n[ERROR OCCURRED]")
-    traceback.print_exc()   # full stack trace in console
+# @app.errorhandler(Exception)
+# def handle_exception(e):
+#     print("\n[ERROR OCCURRED]")
+#     traceback.print_exc()   # full stack trace in console
 
-    app.logger.error(f"Error: {str(e)}", exc_info=True)
+#     app.logger.error(f"Error: {str(e)}", exc_info=True)
 
-    return jsonify({
-        "error": "Internal Server Error",
-        "details": str(e)
-    }), 500
+#     return jsonify({
+#         "error": "Internal Server Error",
+#         "details": str(e)
+#     }), 500
 
 @app.route("/insharelist")
 def getsharelistin():

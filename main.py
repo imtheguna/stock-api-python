@@ -166,46 +166,46 @@ def getsharelistin():
 
 @app.route("/ussharelist")
 def getsharelistus():
-
-    url = "https://datahub.io/core/nasdaq-listings/r/nasdaq-listed-symbols.csv"
-    headers = {"User-Agent": "Mozilla/5.0"}
-
-    now = datetime.datetime.now()
-    download_dir = "./data_cache"
-    os.makedirs(download_dir, exist_ok=True)
-
-    today_str = now.strftime("%Y%m%d")
-    today_file = os.path.join(download_dir, f"us_nasdaq_listings_{today_str}.csv")
-
-    def file_is_older_than(filepath, minutes=60):
-        if not os.path.exists(filepath):
-            return True
-        file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
-        age = now - file_mtime
-        return age.total_seconds() > minutes * 60
-
-    # Download if file doesn't exist or older than 1 hour
-    if file_is_older_than(today_file, 60):
-        try:
-            print('File Downloading '+today_file)
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            with open(today_file, "wb") as f:
-                f.write(response.content)
-        except Exception as e:
-            # If file exists already, ignore error and use cached file
-            if os.path.exists(today_file):
-                pass
-            else:
-                return jsonify({"error": f"Failed to fetch NASDAQ data: {str(e)}"}), 503
-    else:
-            print('Reuse file '+today_file)
-    # At this point file should exist, else error
-    if not os.path.exists(today_file):
-        return jsonify({"error": "Data not available. Please try again later."}), 503
-
-    # Read and return JSON data
     try:
+        url = "https://datahub.io/core/nasdaq-listings/r/nasdaq-listed-symbols.csv"
+        headers = {"User-Agent": "Mozilla/5.0"}
+
+        now = datetime.datetime.now()
+        download_dir = "./data_cache"
+        os.makedirs(download_dir, exist_ok=True)
+
+        today_str = now.strftime("%Y%m%d")
+        today_file = os.path.join(download_dir, f"us_nasdaq_listings_{today_str}.csv")
+
+        def file_is_older_than(filepath, minutes=60):
+            if not os.path.exists(filepath):
+                return True
+            file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
+            age = now - file_mtime
+            return age.total_seconds() > minutes * 60
+
+        # Download if file doesn't exist or older than 1 hour
+        if file_is_older_than(today_file, 60):
+            try:
+                print('File Downloading '+today_file)
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+                with open(today_file, "wb") as f:
+                    f.write(response.content)
+            except Exception as e:
+                # If file exists already, ignore error and use cached file
+                if os.path.exists(today_file):
+                    pass
+                else:
+                    return jsonify({"error": f"Failed to fetch NASDAQ data: {str(e)}"}), 503
+        else:
+                print('Reuse file '+today_file)
+        # At this point file should exist, else error
+        if not os.path.exists(today_file):
+            return jsonify({"error": "Data not available. Please try again later."}), 503
+
+        # Read and return JSON data
+        
         df = pd.read_csv(today_file, usecols=[0, 1])
         df = df.fillna('NULL')
         return jsonify(df.to_dict(orient='records') +us_stocks)
@@ -218,14 +218,17 @@ def getsharelistus():
 # ────── STOCK PRICE (US & INDIAN + US MF) ──────
 @app.route("/price", methods=["GET"])
 def get_price():
-    symbol = request.args.get("symbol")
-    if not symbol:
-        return jsonify({"error": "Missing 'symbol' parameter"}), 400
-
     try:
+        symbol = request.args.get("symbol")
+        if not symbol:
+            print('E1 - Missing symbol parameter')
+            return jsonify({"error": "Missing 'symbol' parameter"}), 400
+
+        
         ticker = yf.Ticker(symbol)
         data = ticker.history(period="1d")
         if data.empty:
+            print('E2 - Invalid or unsupported symbol')
             return jsonify({"error": "Invalid or unsupported symbol"}), 404
 
         price = data['Close'].iloc[-1]
@@ -240,42 +243,42 @@ def get_price():
 # ────── INDIAN MUTUAL FUND NAV (FROM AMFI) ──────
 @app.route("/mf", methods=["GET"])
 def get_mf_nav():
-    scheme_code = request.args.get("code")
-    if not scheme_code:
-        return jsonify({"error": "Missing 'code' (scheme_code) parameter"}), 400
-
-    now = datetime.datetime.now()
-    download_dir = "./data_cache"
-    os.makedirs(download_dir, exist_ok=True)
-    date_str = now.strftime("%Y%m%d")
-    filename = f"NAVAll_{date_str}.txt"
-    filepath = os.path.join(download_dir, filename)
-
-    def file_is_older_than(filepath, minutes=60):
-        if not os.path.exists(filepath):
-            return True
-        file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
-        age = now - file_mtime
-        return age.total_seconds() > minutes * 60
-
-    if file_is_older_than(filepath, 60):
-        try:
-            print('Downloading file '+filepath)
-            url = "https://www.amfiindia.com/spages/NAVAll.txt"
-            response = requests.get(url)
-            response.raise_for_status()
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(response.text)
-        except Exception as e:
-            if os.path.exists(filepath):
-                print('Reuse file ' + filename)
-            else:
-                return jsonify({"error": str(e)}), 500
-    else:
-        print('Reuse file ' + filename)
-
-    # Read and search the file
     try:
+        scheme_code = request.args.get("code")
+        if not scheme_code:
+            return jsonify({"error": "Missing 'code' (scheme_code) parameter"}), 400
+
+        now = datetime.datetime.now()
+        download_dir = "./data_cache"
+        os.makedirs(download_dir, exist_ok=True)
+        date_str = now.strftime("%Y%m%d")
+        filename = f"NAVAll_{date_str}.txt"
+        filepath = os.path.join(download_dir, filename)
+
+        def file_is_older_than(filepath, minutes=60):
+            if not os.path.exists(filepath):
+                return True
+            file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
+            age = now - file_mtime
+            return age.total_seconds() > minutes * 60
+
+        if file_is_older_than(filepath, 60):
+            try:
+                print('Downloading file '+filepath)
+                url = "https://www.amfiindia.com/spages/NAVAll.txt"
+                response = requests.get(url)
+                response.raise_for_status()
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(response.text)
+            except Exception as e:
+                if os.path.exists(filepath):
+                    print('Reuse file ' + filename)
+                else:
+                    return jsonify({"error": str(e)}), 500
+        else:
+            print('Reuse file ' + filename)
+
+        # Read and search the file
         with open(filepath, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
@@ -289,45 +292,48 @@ def get_mf_nav():
                     "date": parts[5],
                     "fund_name": parts[3]
                 })
-
+            
+        print('E3 - Scheme code not found')
         return jsonify({"error": "Scheme code not found"}), 404
 
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
 
 # ────── INDIAN MUTUAL FUND NAV (FROM AMFI) ──────
 @app.route("/mflist", methods=["GET"])
 def getmflist():
-    now = datetime.datetime.now()
-    download_dir = "./data_cache"
-    os.makedirs(download_dir, exist_ok=True)
-    date_str = now.strftime("%Y%m%d")
-    filename = f"NAVAll_{date_str}.txt"
-    filepath = os.path.join(download_dir, filename)
-
-    def file_is_older_than(filepath, minutes=60):
-        if not os.path.exists(filepath):
-            return True
-        file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
-        age = now - file_mtime
-        return age.total_seconds() > minutes * 60
-
-    if file_is_older_than(filepath, 60):
-        try:
-            url = "https://www.amfiindia.com/spages/NAVAll.txt"
-            response = requests.get(url,timeout=15)
-            response.raise_for_status()
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(response.text)
-        except Exception as e:
-            if os.path.exists(filepath):
-                print('Reuse file ' + filename)
-            else:
-                return jsonify({"error": f"Failed to download NAV data: {str(e)}"}), 503
-    else:
-        print('Reuse file ' + filename)
-
     try:
+        now = datetime.datetime.now()
+        download_dir = "./data_cache"
+        os.makedirs(download_dir, exist_ok=True)
+        date_str = now.strftime("%Y%m%d")
+        filename = f"NAVAll_{date_str}.txt"
+        filepath = os.path.join(download_dir, filename)
+
+        def file_is_older_than(filepath, minutes=60):
+            if not os.path.exists(filepath):
+                return True
+            file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
+            age = now - file_mtime
+            return age.total_seconds() > minutes * 60
+
+        if file_is_older_than(filepath, 60):
+            try:
+                url = "https://www.amfiindia.com/spages/NAVAll.txt"
+                response = requests.get(url,timeout=15)
+                response.raise_for_status()
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(response.text)
+            except Exception as e:
+                if os.path.exists(filepath):
+                    print('Reuse file ' + filename)
+                else:
+                    return jsonify({"error": f"Failed to download NAV data: {str(e)}"}), 503
+        else:
+            print('Reuse file ' + filename)
+
+        
         with open(filepath, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
@@ -345,6 +351,7 @@ def getmflist():
 
         return jsonify(funds)
     except Exception as e:
+        print(e)
         if os.path.exists(filepath):
             os.remove(filepath)
         print('Cached file deleted')

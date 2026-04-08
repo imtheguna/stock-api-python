@@ -10,8 +10,8 @@ import logging
 app = Flask(__name__)
 CORS(app)
 
-logging.basicConfig(level=logging.ERROR)
-app.logger.setLevel(logging.ERROR)
+logging.basicConfig(level=logging.INFO)
+app.logger.setLevel(logging.INFO)
 
 us_stocks = list([
    {
@@ -243,6 +243,7 @@ def get_price():
             return jsonify({"error": "Invalid or unsupported symbol"}), 404
 
         price = data['Close'].iloc[-1]
+        logging.info(f"Symbol: {symbol}, Price: {round(price, 2)}")
         return jsonify({
             "symbol": symbol,
             "price": round(price, 2)

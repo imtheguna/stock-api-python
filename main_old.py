@@ -2,9 +2,73 @@ from flask import Flask, request, jsonify
 import yfinance as yf
 import requests
 import pandas as pd
-import tempfile
+import tempfile,datetime,os
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
+us_stocks = list([
+   {
+    "Company Name": "Vanguard S&P 500 ETF",
+    "Symbol": "VOO"
+  }
+])
+
+etf_list = list([
+    {
+  "symbol": "PGINVIT-IV",
+  "etf_name": "Powergrid Infrastructure Investment Trust",
+  "exchange": "NSE",
+  "type": "Trust",
+  "track": "Trust"
+},
+{
+  "symbol": "AUTOBEES",
+  "etf_name": "Nippon India ETF Nifty Auto BeES",
+  "exchange": "NSE",
+  "type": "Index",
+  "track": "Nifty Auto"
+},{
+  "symbol": "FMCGIETF",
+  "etf_name": "ICICI Prudential Nifty Fmcg Etf",
+  "exchange": "NSE",
+  "type": "Index",
+  "track": "Nifty FMCG"
+},
+  {"symbol":"NIFTYBEES","etf_name":"Nippon India ETF Nifty 50 BeES","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"SETFNIF50","etf_name":"SBI ETF Nifty 50","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"ICICINIFTY","etf_name":"ICICI Prudential Nifty 50 ETF","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"HDFCNIFTY","etf_name":"HDFC Nifty 50 ETF","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"UTINIFTETF","etf_name":"UTI Nifty ETF","exchange":"NSE","type":"Index","track":"Nifty 50"},
+  {"symbol":"JUNIORBEES","etf_name":"Nippon India ETF Nifty Next 50 BeES","exchange":"NSE","type":"Index","track":"Nifty Next 50"},
+  {"symbol":"SETFNN50","etf_name":"SBI ETF Nifty Next 50","exchange":"NSE","type":"Index","track":"Nifty Next 50"},
+  {"symbol":"ICICIN500","etf_name":"ICICI Prudential Nifty 500 ETF","exchange":"NSE","type":"Index","track":"Nifty 500"},
+  {"symbol":"MOM500","etf_name":"Motilal Oswal Nifty 500 ETF","exchange":"NSE","type":"Index","track":"Nifty 500"},
+  {"symbol":"MID150BEES","etf_name":"Nippon India ETF Nifty Midcap 150","exchange":"NSE","type":"Index","track":"Nifty Midcap 150"},
+  {"symbol":"SETFMID150","etf_name":"SBI ETF Nifty Midcap 150","exchange":"NSE","type":"Index","track":"Nifty Midcap 150"},
+  {"symbol":"SMALLCAP","etf_name":"Nippon India ETF Nifty Smallcap 100","exchange":"NSE","type":"Index","track":"Nifty Smallcap 100"},
+  {"symbol":"BANKBEES","etf_name":"Nippon India ETF Bank BeES","exchange":"NSE","type":"Sector","track":"Nifty Bank"},
+  {"symbol":"SETFBANK","etf_name":"SBI ETF Banking","exchange":"NSE","type":"Sector","track":"Nifty Bank"},
+  {"symbol":"ICICIBANKETF","etf_name":"ICICI Prudential Bank ETF","exchange":"NSE","type":"Sector","track":"Nifty Bank"},
+  {"symbol":"ITBEES","etf_name":"Nippon India ETF IT BeES","exchange":"NSE","type":"Sector","track":"Nifty IT"},
+  {"symbol":"PHARMABEES","etf_name":"Nippon India ETF Pharma BeES","exchange":"NSE","type":"Sector","track":"Nifty Pharma"},
+  {"symbol":"PSUBNKBEES","etf_name":"Nippon India ETF PSU Bank","exchange":"NSE","type":"Sector","track":"Nifty PSU Bank"},
+  {"symbol":"INFRABEES","etf_name":"Nippon India ETF Infrastructure","exchange":"NSE","type":"Sector","track":"Infrastructure"},
+  {"symbol":"SETFSENSEX","etf_name":"SBI ETF Sensex","exchange":"NSE","type":"Index","track":"Sensex"},
+  {"symbol":"HDFCSENSEX","etf_name":"HDFC Sensex ETF","exchange":"NSE","type":"Index","track":"Sensex"},
+  {"symbol":"UTISENSETF","etf_name":"UTI Sensex ETF","exchange":"NSE","type":"Index","track":"Sensex"},
+  {"symbol":"BHARAT22","etf_name":"ICICI Prudential Bharat 22 ETF","exchange":"NSE","type":"Index","track":"Bharat 22"},
+  {"symbol":"GOLDBEES","etf_name":"Nippon India ETF Gold BeES","exchange":"NSE","type":"Commodity","track":"Gold"},
+  {"symbol":"SETFGOLD","etf_name":"SBI Gold ETF","exchange":"NSE","type":"Commodity","track":"Gold"},
+  {"symbol":"HDFCGOLD","etf_name":"HDFC Gold ETF","exchange":"NSE","type":"Commodity","track":"Gold"},
+  {"symbol":"ICICIGOLD","etf_name":"ICICI Prudential Gold ETF","exchange":"NSE","type":"Commodity","track":"Gold"},
+  {"symbol":"SILVERBEES","etf_name":"Nippon India ETF Silver","exchange":"NSE","type":"Commodity","track":"Silver"},
+  {"symbol":"LIQUIDBEES","etf_name":"Nippon India ETF Liquid BeES","exchange":"NSE","type":"Debt","track":"Liquid/Money Market"},
+  {"symbol":"MON100","etf_name":"Motilal Oswal Nasdaq 100 ETF","exchange":"NSE","type":"International","track":"NASDAQ 100"},
+  {"symbol":"MAFANG","etf_name":"Mirae Asset FANG+ ETF","exchange":"NSE","type":"International","track":"NYSE FANG+"},
+  {"symbol":"HNGSNGBEES","etf_name":"Nippon India ETF Hang Seng","exchange":"NSE","type":"International","track":"Hang Seng"}
+])
 
 @app.route("/test")
 def test():
@@ -19,62 +83,152 @@ def home():
         "endpoints": {
             "/price": "GET with ?symbol= (AAPL, RELIANCE.BO, VTSAX, etc.)",
             "/mf": "GET with ?code= (Indian Mutual Fund Scheme Code like 120503)",
-            "/mflist":"GET all MF list"
+            "/mflist": "GET all MF list",
+            "/insharelist": "GET Indian equity master list",
+            "/ussharelist": "GET US NASDAQ stock list"
         }
     })
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    traceback.print_exc()
+    return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
 @app.route("/insharelist")
 def getsharelistin():
-    csv_url = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
-    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_file:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                  "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-            "Accept": "text/csv,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Referer": "https://www.nseindia.com/",
-            "Origin": "https://www.nseindia.com",
-            "Connection": "keep-alive"
-        }
-        response = requests.get(csv_url, headers=headers)
-        if response.status_code != 200:
-            raise Exception(f"Failed to fetch CSV: {response.status_code}")
-        response.raise_for_status()
-        tmp_file.write(response.content)
-        temp_path = tmp_file.name
+    nse_csv_url = "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv"
+    fallback_csv_url = "https://raw.githubusercontent.com/imtheguna/stock-api-python/main/EQUITY_L.csv"
 
-    df = pd.read_csv(temp_path,usecols=[0, 1])
-    json_data = df.to_dict(orient='records')
-    return jsonify(json_data)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+        "Accept": "text/csv,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://www.nseindia.com/",
+        "Origin": "https://www.nseindia.com",
+        "Connection": "keep-alive"
+    }
+
+    now = datetime.datetime.now()
+    download_dir = "./data_cache"
+    os.makedirs(download_dir, exist_ok=True)
+
+    date_str = now.strftime("%Y%m%d")
+    filename = f"EQUITY_L_{date_str}.csv"
+    filepath = os.path.join(download_dir, filename)
+    etf = []
+    for i in etf_list:
+        etf.append({
+            "NAME OF COMPANY": i['etf_name'],
+            "SYMBOL": i['symbol']
+        })
+    def file_is_older_than(path, minutes=60):
+        if not os.path.exists(path):
+            return True
+        age = now - datetime.datetime.fromtimestamp(os.path.getmtime(path))
+        return age.total_seconds() > minutes * 60
+
+    def download_csv(url, headers):
+        try:
+            print(f"Attempting to download from {url}")
+            response = requests.get(url, headers=headers, timeout=15)
+            response.raise_for_status()
+            with open(filepath, "wb") as f:
+                f.write(response.content)
+            return True
+        except Exception as e:
+            print(f"Download failed: {e}")
+            return False
+
+    # Download or reuse
+    if file_is_older_than(filepath, 60):
+        if not download_csv(nse_csv_url, headers):
+            print("Trying fallback...")
+            if not download_csv(fallback_csv_url, {}):
+                return jsonify({"error": "Failed to download CSV from both sources"}), 503
+    else:
+        print('')
+        print(f"Using cached file: {filename}")
+
+    # Read and return
+    try:
+        df = pd.read_csv(filepath, usecols=["SYMBOL", "NAME OF COMPANY"])
+        df = df.fillna('NULL')
+        data = df.to_dict(orient="records")
+        return jsonify(data+etf)
+    except Exception as e:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        return jsonify({"error": "Failed to read CSV", "details": str(e)}), 500
+
 
 @app.route("/ussharelist")
 def getsharelistus():
-    url = "https://datahub.io/core/nasdaq-listings/r/nasdaq-listed-symbols.csv"
-    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp_file:
-        headers = {
-            "User-Agent": "Mozilla/5.0",  # NSE may require a browser-like user agent
-        }
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        tmp_file.write(response.content)
-        temp_path = tmp_file.name
+    try:
+        url = "https://datahub.io/core/nasdaq-listings/r/nasdaq-listed-symbols.csv"
+        headers = {"User-Agent": "Mozilla/5.0"}
+
+        now = datetime.datetime.now()
+        download_dir = "./data_cache"
+        os.makedirs(download_dir, exist_ok=True)
+
+        today_str = now.strftime("%Y%m%d")
+        today_file = os.path.join(download_dir, f"us_nasdaq_listings_{today_str}.csv")
+
+        def file_is_older_than(filepath, minutes=60):
+            if not os.path.exists(filepath):
+                return True
+            file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
+            age = now - file_mtime
+            return age.total_seconds() > minutes * 60
+
+        # Download if file doesn't exist or older than 1 hour
+        if file_is_older_than(today_file, 60):
+            try:
+                print('File Downloading '+today_file)
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+                with open(today_file, "wb") as f:
+                    f.write(response.content)
+            except Exception as e:
+                # If file exists already, ignore error and use cached file
+                if os.path.exists(today_file):
+                    pass
+                else:
+                    return jsonify({"error": f"Failed to fetch NASDAQ data: {str(e)}"}), 503
+        else:
+                print('Reuse file '+today_file)
+        # At this point file should exist, else error
+        if not os.path.exists(today_file):
+            return jsonify({"error": "Data not available. Please try again later."}), 503
+
+        # Read and return JSON data
         
-    df = pd.read_csv(temp_path,usecols=[0, 1])
-    json_data = df.to_dict(orient='records')
-    return jsonify(json_data)
+        df = pd.read_csv(today_file, usecols=[0, 1])
+        df = df.fillna('NULL')
+        return jsonify(df.to_dict(orient='records') +us_stocks)
+    except Exception as e:
+        os.remove(today_file)
+        print('Cached file deleted')
+        return jsonify({"error": f"Failed to read CSV: {str(e)}"}), 500
+
 
 # ────── STOCK PRICE (US & INDIAN + US MF) ──────
 @app.route("/price", methods=["GET"])
 def get_price():
-    symbol = request.args.get("symbol")
-    if not symbol:
-        return jsonify({"error": "Missing 'symbol' parameter"}), 400
-
     try:
+        symbol = request.args.get("symbol")
+        if not symbol:
+            print('E1 - Missing symbol parameter')
+            return jsonify({"error": "Missing 'symbol' parameter"}), 400
+
+        
         ticker = yf.Ticker(symbol)
         data = ticker.history(period="1d")
         if data.empty:
+            print('E2 - Invalid or unsupported symbol')
             return jsonify({"error": "Invalid or unsupported symbol"}), 404
 
         price = data['Close'].iloc[-1]
@@ -85,55 +239,141 @@ def get_price():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 # ────── INDIAN MUTUAL FUND NAV (FROM AMFI) ──────
 @app.route("/mf", methods=["GET"])
 def get_mf_nav():
-    scheme_code = request.args.get("code")
-    if not scheme_code:
-        return jsonify({"error": "Missing 'code' (scheme_code) parameter"}), 400
-
-    url = "https://www.amfiindia.com/spages/NAVAll.txt"
     try:
-        response = requests.get(url)
-        if response.status_code != 200:
-            return jsonify({"error": "Failed to fetch NAV data"}), 500
+        scheme_code = request.args.get("code")
+        if not scheme_code:
+            return jsonify({"error": "Missing 'code' (scheme_code) parameter"}), 400
 
-        lines = response.text.splitlines()
+        now = datetime.datetime.now()
+        download_dir = "./data_cache"
+        os.makedirs(download_dir, exist_ok=True)
+        date_str = now.strftime("%Y%m%d")
+        filename = f"NAVAll_{date_str}.txt"
+        filepath = os.path.join(download_dir, filename)
+
+        def file_is_older_than(filepath, minutes=60):
+            if not os.path.exists(filepath):
+                return True
+            file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
+            age = now - file_mtime
+            return age.total_seconds() > minutes * 60
+
+        if file_is_older_than(filepath, 60):
+            try:
+                print('Downloading file '+filepath)
+                url = "https://www.amfiindia.com/spages/NAVAll.txt"
+                response = requests.get(url)
+                response.raise_for_status()
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(response.text)
+            except Exception as e:
+                if os.path.exists(filepath):
+                    print('Reuse file ' + filename)
+                else:
+                    return jsonify({"error": str(e)}), 500
+        else:
+            print('Reuse file ' + filename)
+
+        # Read and search the file
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
         for line in lines:
             if line.startswith(scheme_code + ";"):
-                parts = line.split(";")
+                parts = line.strip().split(";")
                 return jsonify({
                     "scheme_code": scheme_code,
                     "scheme_name": parts[2],
                     "nav": parts[4],
                     "date": parts[5],
-                    "fund_name":parts[3]
+                    "fund_name": parts[3]
                 })
+            
+        print('E3 - Scheme code not found')
         return jsonify({"error": "Scheme code not found"}), 404
+
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
 
 # ────── INDIAN MUTUAL FUND NAV (FROM AMFI) ──────
 @app.route("/mflist", methods=["GET"])
 def getmflist():
-    url = "https://www.amfiindia.com/spages/NAVAll.txt"
-    response = requests.get(url)
+    try:
+        now = datetime.datetime.now()
+        download_dir = "./data_cache"
+        os.makedirs(download_dir, exist_ok=True)
+        date_str = now.strftime("%Y%m%d")
+        filename = f"NAVAll_{date_str}.txt"
+        filepath = os.path.join(download_dir, filename)
 
-    lines = response.text.splitlines()
-    funds = []
+        def file_is_older_than(filepath, minutes=60):
+            if not os.path.exists(filepath):
+                return True
+            file_mtime = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
+            age = now - file_mtime
+            return age.total_seconds() > minutes * 60
 
-    for line in lines:
-        parts = line.split(";")
-        if len(parts) >= 5 and parts[0].isdigit():
-            funds.append({
-                 "scheme_code": parts[0],
+        if file_is_older_than(filepath, 60):
+            try:
+                url = "https://www.amfiindia.com/spages/NAVAll.txt"
+                response = requests.get(url,timeout=15)
+                response.raise_for_status()
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(response.text)
+            except Exception as e:
+                if os.path.exists(filepath):
+                    print('Reuse file ' + filename)
+                else:
+                    return jsonify({"error": f"Failed to download NAV data: {str(e)}"}), 503
+        else:
+            print('Reuse file ' + filename)
+
+        
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        funds = []
+        for line in lines:
+            parts = line.strip().split(";")
+            if len(parts) >= 6 and parts[0].isdigit():
+                funds.append({
+                    "scheme_code": parts[0],
                     "scheme_name": parts[2],
                     "nav": parts[4],
                     "date": parts[5],
-                    "fund_name":parts[3]
-            })
+                    "fund_name": parts[3]
+                })
 
-    return funds
+        return jsonify(funds)
+    except Exception as e:
+        print(e)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        print('Cached file deleted')
+        return jsonify({"error": "Failed to read cached NAV data", "details": str(e)}), 500
+
+def getpriceforjson(symbol:str,day:str):
+    ticker = yf.Ticker(symbol)
+    data = ticker.history(period=day)
+    data = data['Close'].iloc[-1 * int(day[0])]
+    # data.reset_index()
+    # json_data = data.to_json(orient="records", date_format="iso")
+    return data
+
+# @app.route("/getDetailsFromJson", methods=["POST"])
+# def getDetailsFromJson():
+#     result_list = {}
+#     payload = request.get_json()
+#     day = payload['day']
+#     for i in payload['list']:
+#         if(payload['list'][i]['type']!='inmf'):
+#             result_list[i] = getpriceforjson(payload['list'][i]['symbol'],day=day)
+#     return result_list
 
 def creteApp():
     app.run(host='0.0.0.0',port=4444)
